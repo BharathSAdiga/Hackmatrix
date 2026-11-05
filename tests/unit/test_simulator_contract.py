@@ -77,6 +77,12 @@ class SimulatorTransitionTests(unittest.TestCase):
         self.assertTrue(self.observation["done"])
         self.assertEqual(len(self.state["decisions"]), 6)
 
+    def test_finish_with_undecided_tickets_is_valid_but_records_no_decisions(self):
+        self.take({"op": "finish"})
+        self.assertTrue(self.observation["done"])
+        self.assertEqual(self.state["decisions"], {})
+        self.assertEqual(self.observation["result"], {"ok": True, "data": {"closed": True}})
+
     def test_budget_boundary_and_invalid_action_cost(self):
         part_id = self.world["parts"][0]["id"]
         for _ in range(13):

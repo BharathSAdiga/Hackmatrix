@@ -49,26 +49,22 @@ class SolutionContractTests(unittest.TestCase):
         self.assertEqual(result["action"]["op"], "llm")
         self.assertIn("observation", result["action"]["messages"][0]["content"])
 
-    def test_malformed_model_json_raises_json_decode_error(self):
+    def test_malformed_model_json_falls_back_without_unsafe_dispatch(self):
         observation = {**self.observation, "llm_response": "not-json"}
-        with self.assertRaises(json.JSONDecodeError):
-            solution.decide(observation, {})
+        result = solution.decide(observation, {})
+        self.assertNotEqual(result["action"].get("op"), "dispatch")
 
-    def test_non_object_model_json_is_rejected(self):
+    def test_non_object_model_json_falls_back_without_unsafe_dispatch(self):
         observation = {**self.observation, "llm_response": "[]"}
-        with self.assertRaises(ValueError):
-            solution.decide(observation, {})
+        result = solution.decide(observation, {})
+        self.assertNotEqual(result["action"].get("op"), "dispatch")
 
-    def test_dictionary_model_action_is_returned_without_world_schema_validation(self):
+    def test_dictionary_model_action_is_never_forwarded_as_world_action(self):
         observation = {**self.observation, "llm_response": '{"op":"not_a_world_action"}'}
         result = solution.decide(observation, {})
-        self.assertEqual(result["action"], {"op": "not_a_world_action"})
-        # The simulator, rather than the starter, must reject this action.
-        world = json.loads((PACKET / "training.json").read_text())[0]["world"]
-        state, _ = sim.start(world)
-        state, updated, _ = sim.step(world, state, result["action"])
-        self.assertEqual(updated["result"], {"ok": False, "error": "invalid_operation"})
-        self.assertEqual(state["spent"], 1)
+        self.assertNotEqual(result["action"], {"op": "not_a_world_action"})
+        self.assertIn(result["action"].get("op"),
+                      {"inspect", "verify", "clarify", "dispatch", "escalate", "finish"})
 
 
 if __name__ == "__main__":

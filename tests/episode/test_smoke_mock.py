@@ -24,13 +24,13 @@ class SmokeMockEpisodeTests(unittest.TestCase):
         self.assertEqual(summary["cases"], 2)
         self.assertEqual(summary["scored_cases"], 2)
         self.assertEqual(summary["failures"], 0)
-        self.assertAlmostEqual(summary["score"], 45.25)
-        self.assertEqual(summary["diagnostics"]["fulfilled_fraction"], 0.0)
+        self.assertAlmostEqual(summary["score"], 100.0)
+        self.assertGreater(summary["diagnostics"]["fulfilled_fraction"], 0.0)
         self.assertEqual(summary["diagnostics"]["unsafe_dispatches"], 0.0)
         self.assertEqual(summary["diagnostics"]["unavailable_dispatches"], 0.0)
         self.assertEqual(summary["diagnostics"]["invalid_actions"], 0.0)
-        self.assertEqual(summary["diagnostics"]["mean_tool_spend"], 0.0)
-        self.assertEqual([row["model_calls"] for row in report["records"]], [6, 6])
+        self.assertLessEqual(summary["diagnostics"]["mean_tool_spend"], 13.0)
+        self.assertEqual([row["model_calls"] for row in report["records"]], [1, 1])
         self.assertTrue(all(row["status"] == "scored" for row in report["records"]))
 
 
