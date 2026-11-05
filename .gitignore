@@ -16,4 +16,5 @@ gateway_service/.env*
 gateway_service/secrets*
 gateway_service/TUNNEL_URL.txt
 gateway_service/cloudflared.exe
+evaluation_testing_copy/
 *.exe
