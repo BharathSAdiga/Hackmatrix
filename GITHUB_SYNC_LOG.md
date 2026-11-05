@@ -21,6 +21,7 @@
 | Checkpoint / Stage | Branch | Commit Hash | Verified Tests | Remote Push Status | Notes |
 |---|---|---|---|:---:|---|
 | Initial Setup | `main` | `892c879` | Format & Lint | Synced | Initial packet import and repository bootstrap. |
-| Stages 1, 2, 5, 6, 7 Verification | `development` | *Pending* | 75 Unit, 1 Episode, 2 Local checks | *In Progress* | Audit, test harness, Document Intelligence, Request Analyst, and Inventory Strategy modules. |
+| Stages 1, 2, 5, 6, 7 Verification | `development` | `631f1a2` | 75 Unit, 1 Episode, 2 Local checks | **PUSHED** | Audit, test harness, Document Intelligence, Request Analyst, and Inventory Strategy modules. Clean push with zero simulator diffs. |
+| Working Branch Mirror | `work/baseline-testing` | `631f1a2` | 75 Unit, 1 Episode, 2 Local checks | **PUSHED** | Mirrored Codex working branch to remote for team tracking. |
 
 ---
