@@ -11,3 +11,4 @@ ENV/
 .vscode/
 *.swp
 *.swo
+PARTSINTEL_BACKUPS/
