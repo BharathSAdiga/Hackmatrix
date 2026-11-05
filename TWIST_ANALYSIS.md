@@ -1,6 +1,32 @@
 # PARTSINTEL Twist Analysis
 
-**Status: the official post-twist release is not available yet. No implementation changes were made.**
+## Current official packet update — 5 Nov 2026, 16:50 IST
+
+The official packet is now present at `agentic-2026-11-04.v2-twist`. Its `TWIST.md` says **0 new operating records** are included and directs teams to download the current pack again after the next release. The later release times are controlled by the portal timetable; no missing records have been inferred or fabricated.
+
+### Actual post-twist changes in `RECORDS.md`
+
+- Wattage is an inclusive minimum/maximum range. A part above the maximum is incompatible; the old blanket permission for higher wattage no longer applies. Clarification supplies the complete approved request when the load range is missing.
+- Inventory is shared and quantity-based. `inventory_manifest` supplies warehouse and desk-receipt revisions; it does not supply quantities. A stock document is authoritative at batch open only when approved, on the manifest's warehouse revision, and `event_at <= as_of`. Legacy `available` cache values are not authoritative. `verify` gives the current warehouse quantity and approved part card. Opening quantities must account for recorded dispatches; verification quantities already include them; inspection does not reserve stock.
+- Outcome credit uses maximum joint stock matching. Let `M` be the maximum number of tickets jointly fulfillable from opening stock. For escalations `H`, `R` is the maximum jointly fulfillable subset using stock left after fulfilled dispatches. `min(n-M, len(H)-R)` handoffs receive full credit; other handoffs receive 15%. Any incompatible dispatch still zeros the batch.
+- Post-twist/final cases retain 1–8 successful calls and add a **shared 48,000 UTF-8 byte budget per case** across all serialized `messages` lists. Count `json.dumps(messages, ensure_ascii=False, allow_nan=False)` with default separators. The per-request 48,000-byte limit remains. Exceeding the shared budget returns `llm_budget` and makes the case ineligible.
+- The six action schemas, 14 tool units, 60-action limit, and costs are unchanged.
+
+### Packet comparison and testability
+
+`OBSERVATIONS.md`, `API.md`, `GATEWAY.md`, `DEVELOPMENT.md`, `agentic_simulator.py`, `local_runner.py`, `training.json`, `practice.json`, `smoke.json`, `dataset_info.json`, and `baseline_results.json` are identical to the initial packet. `TWIST.md`, `RELEASE.md`, `RECORDS.md`, and `EVALUATION.md` are new; `BRIEF.md` and `EVENT_RULES.md` changed. The twist packet's `solution.py` is the generic starter, not the PARTSINTEL controller.
+
+Because the supplied simulator and datasets are unchanged, ordinary local runner scores cannot validate the new range, quantity, matching, or shared-byte rules. Focused synthetic tests were added from the published text, but they are not replacements for future official records or portal evaluation.
+
+### Working-copy adaptation
+
+The pre-twist package remains untouched. A separate `submission/PARTSINTEL_POST_TWIST_WORKING` copy now adds: range-aware parsing and fail-closed compatibility; revision-validated stock document quantities and verification; shared capacity matching; and exact per-case message-byte accounting. The working copy passed 10 focused twist-rule tests and ordinary mock smoke/training/practice regression (details in `CHANGED_CONDITION_TEST_REPORT.md` and `REGRESSION_REPORT.md`). No genuine inference was rerun because it would use paid model tokens and no additional paid usage was approved.
+
+**Readiness:** adapted working copy is locally tested against the published rules and unchanged ordinary simulator; it is not yet eligible to claim actual changed-condition or portal success. Do not substitute the generic packet starter or upload an unverified old ZIP.
+
+---
+
+**Historical pre-release audit follows; its status and timestamp describe the earlier check, not the current packet.**
 
 ## Release check
 

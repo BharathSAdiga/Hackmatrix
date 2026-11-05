@@ -65,3 +65,10 @@ An LLM suggestion cannot override any deterministic rejection. In particular, th
 ## Scope and validation
 
 The controller reads only observation fields and tool results. It does not use evaluator `world` labels, make network requests directly, or modify the simulator. Local mock runs validate controller wiring only; they do not demonstrate genuine gateway inference or official eligibility. Changed-condition behavior follows the live policy string and requires authoritative verify results.
+# Post-twist rule handling
+
+The post-twist copy keeps the same supervisor and deterministic safety gate. It adds three focused checks: request wattage is an inclusive minimum/maximum range when the observation carries the twist inventory manifest; stock is usable only from an approved opening-stock document bound to the manifest warehouse revision or from `verify`; and dispatch capacity is matched across all undecided requests before choosing a known-stock assignment. Unknown or missing range endpoints remain unresolved and trigger the scripted clarification when available.
+
+The supervisor counts the UTF-8 bytes of each `messages` list using the exact `json.dumps(messages, ensure_ascii=False, allow_nan=False)` representation and keeps a per-case cumulative total capped at 48,000 bytes. The controller still makes one compact analysis call per case, so this cap is a guard rather than a reason to add agent calls.
+
+The supplied twist packet currently contains zero new operating records, and its local simulator/data match the initial packet. The synthetic tests in the repository check the written rules; they do not substitute for later released records or post-twist portal grading.

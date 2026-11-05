@@ -10,12 +10,12 @@ _CLAUSE_SPLIT = re.compile(r"(?<=[.;!?])\s+|\s*;\s*")
 _HISTORICAL = re.compile(r"\b(retired|previous|prior|former|discarded|obsolete|old)\b", re.I)
 _NEGATED = re.compile(r"\b(ignore that|not a specification|never approved|not approved)\b", re.I)
 _CONSTRAINT_CUES = re.compile(
-    r"\b(?:must|must not|do not|don't|only|exactly|minimum|at least|floor|not go below|larger|higher|different connector|ignore|retain|now takes|needs?|requires?)\b", re.I)
+    r"\b(?:must|must not|do not|don't|only|exactly|minimum|maximum|max|at least|at most|floor|ceiling|not go below|larger|higher|different connector|ignore|retain|now takes|needs?|requires?)\b", re.I)
 _LABELED_BARE_VOLTAGE = re.compile(
     r"\b(?:input\s+)?voltage\s*(?:is|of|:|=)\s*(?P<value>(?:\d+(?:\.\d+)?|\.\d+))(?!\d|\.\d)(?!\s*(?:mV|V|volts?)\b)", re.I)
 _POWER_NUMBER = r"(?:\d+(?:\.\d+)?|\.\d+)"
 _POWER_RANGE = re.compile(
-    rf"\b(?:between|from|range(?:\s+of)?)\s*(?P<low>{_POWER_NUMBER}\s*(?:mW|W|watts?)?)\s*(?:and|to|[-–—])\s*(?P<high>{_POWER_NUMBER}\s*(?:mW|W|watts?))\b", re.I)
+    rf"\b(?:(?:between|from|range(?:\s+of)?)\s*)?(?P<low>{_POWER_NUMBER}\s*(?:mW|W|watts?)?)\s*(?:and|to|[-–—])\s*(?P<high>{_POWER_NUMBER}\s*(?:mW|W|watts?))\b", re.I)
 _MAX_CUE = re.compile(r"\b(?:max(?:imum)?|ceiling|at most|up to|no more than|not above|not exceed(?:ing)?)\b", re.I)
 
 
@@ -40,8 +40,9 @@ def _power_bounds(text):
         if any(start <= fact["start"] < end for start, end in covered):
             continue
         context = text[max(0, fact["start"] - 60):fact["start"]]
+        trailing = text[fact["end"]:fact["end"] + 24]
         fact = dict(fact)
-        if _MAX_CUE.search(context):
+        if _MAX_CUE.search(context) or re.match(r"\s*(?:max(?:imum)?|ceiling)\b", trailing, re.I):
             fact["bound"] = "maximum"
             maximums.append(fact)
         else:
@@ -316,7 +317,8 @@ def analyze_requests(observation, document_analysis, clarifications=None, stock_
                 Decimal("10") <= decimal_value(part["technical_facts"]["wattage"]["value"]) < Decimal("20")
                 for part in catalog)
             request["clarification_recommended"] = bool(
-                (strict_range and "maximum_wattage" in request["missing_critical_information"]) or
+                (strict_range and bool({"minimum_wattage", "maximum_wattage"} &
+                                       set(request["missing_critical_information"]))) or
                 (not resolveable and clarification_can_change_match))
         else:
             request["clarification_recommended"] = False

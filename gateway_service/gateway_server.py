@@ -92,14 +92,13 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
             self.send_error(404, "Invalid endpoint path. Use /gateway")
             return
 
-        expected_token = os.environ.get("TEAM_GATEWAY_TOKEN", "")
-        if not expected_token:
+        allowed_tokens = [t for t in (os.environ.get("TEAM_GATEWAY_TOKEN"), os.environ.get("ALT_GATEWAY_TOKEN")) if t]
+        if not allowed_tokens:
             self.send_error(503, "Gateway authentication unconfigured")
             return
 
         auth_header = self.headers.get("Authorization", "")
-        expected_auth = f"Bearer {expected_token}"
-        if not hmac.compare_digest(auth_header, expected_auth):
+        if not any(hmac.compare_digest(auth_header, f"Bearer {token}") for token in allowed_tokens):
             self.send_error(403, "Forbidden: Invalid or missing gateway bearer token")
             return
 

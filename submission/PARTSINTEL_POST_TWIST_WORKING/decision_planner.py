@@ -53,6 +53,45 @@ def _option_rank(option, use_counts, inventory):
     return (query_cost, use_counts.get(part_id, 0), part_id)
 
 
+def _maximum_known_assignment(ticket_order, options_by_ticket, inventory):
+    """Maximum-cardinality matching over currently proven compatible stock."""
+    capacities = {}
+    for part_id, part in inventory.get("parts", {}).items():
+        remaining = part.get("remaining_stock")
+        if (not part.get("conflict") and type(remaining) is int and remaining > 0):
+            capacities[part_id] = min(remaining, len(ticket_order))
+    slots = {part_id: [(part_id, i) for i in range(capacity)]
+             for part_id, capacity in capacities.items()}
+    edges = {}
+    for ticket_id in ticket_order:
+        edges[ticket_id] = []
+        for candidate, _ in options_by_ticket.get(ticket_id, []):
+            part_id = candidate.get("part_id")
+            if part_id in slots and part_id not in edges[ticket_id]:
+                edges[ticket_id].append(part_id)
+    ordered = sorted(ticket_order, key=lambda tid: (len(edges.get(tid, [])), ticket_order.index(tid)))
+    matched_slot = {}
+
+    def augment(ticket_id, seen):
+        for part_id in edges.get(ticket_id, []):
+            for slot in slots[part_id]:
+                if slot in seen:
+                    continue
+                seen.add(slot)
+                previous = matched_slot.get(slot)
+                if previous is None or augment(previous, seen):
+                    matched_slot[slot] = ticket_id
+                    return True
+        return False
+
+    for ticket_id in ordered:
+        augment(ticket_id, set())
+    assignment = {}
+    for (part_id, _), ticket_id in matched_slot.items():
+        assignment[ticket_id] = part_id
+    return assignment
+
+
 def _clarification_needed_after_stock_check(request, options, inventory):
     """Ask for wattage when all 20 W routes are known unavailable but a 10 W route remains.
 
@@ -114,8 +153,19 @@ def plan_next_action(observation, analysis, inventory, warnings, state):
         for _, part in options:
             pid = part["part_id"]
             use_counts[pid] = use_counts.get(pid, 0) + 1
+    ticket_order = [ticket["id"] for ticket in undecided]
+    known_assignment = _maximum_known_assignment(ticket_order, options_by_ticket, inventory)
+    def unresolved_stock(ticket_id):
+        for candidate, _ in options_by_ticket.get(ticket_id, []):
+            part_state = inventory.get("parts", {}).get(candidate.get("part_id"), {})
+            if not part_state.get("current", {}).get("known"):
+                return True
+        return False
+
     ordered = sorted(enumerate(undecided),
-                     key=lambda item: (len(options_by_ticket[item[1]["id"]]), item[0]))
+                     key=lambda item: (not unresolved_stock(item[1]["id"]),
+                                       item[1]["id"] in known_assignment,
+                                       len(options_by_ticket[item[1]["id"]]), item[0]))
     attempted_clarifications = {entry.get("ticket_id") for entry in state.get("history", [])
                                 if isinstance(entry, dict) and entry.get("op") == "clarify"}
     for _, ticket in ordered:
@@ -133,7 +183,10 @@ def plan_next_action(observation, analysis, inventory, warnings, state):
                 affordable, _ = budget_manager.can_afford("clarify", observation, state)
                 if affordable:
                     return {"op": "clarify", "ticket_id": ticket_id}, "missing_wattage_can_change_candidate"
-        for candidate, _ in sorted(options, key=lambda opt: _option_rank(opt, use_counts, inventory)):
+        assigned_part = known_assignment.get(ticket_id)
+        for candidate, _ in sorted(options, key=lambda opt: (
+                opt[0].get("part_id") != assigned_part,
+                _option_rank(opt, use_counts, inventory))):
             if candidate.get("status") != "compatible":
                 continue
             part_id = candidate["part_id"]
