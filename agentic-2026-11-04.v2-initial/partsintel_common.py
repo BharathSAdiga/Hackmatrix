@@ -9,6 +9,13 @@ VOLTAGE_RE = re.compile(rf"(?<![\w.])(?P<value>{NUMBER})\s*-?\s*(?P<unit>mV|V|vo
 WATT_RE = re.compile(rf"(?<![\w.])(?P<value>{NUMBER})\s*-?\s*(?P<unit>mW|W|watts?)\b", re.I)
 CONNECTOR_RE = re.compile(r"\bUSB\s*(?:Type\s*)?-\s*C\b|\bbarrel\b", re.I)
 
+# Post-twist wattage range and ceiling patterns
+WATT_UNIT = r"(?:mW|W|watts?|milliwatts?)"
+RANGE_BETWEEN = re.compile(rf"\bbetween\s+(?P<min>{NUMBER})\s*(?P<u1>{WATT_UNIT})?\s*(?:and|to|-)\s*(?P<max>{NUMBER})\s*(?P<u2>{WATT_UNIT})\b", re.I)
+RANGE_HYPHEN = re.compile(rf"(?<![\w.])(?P<min>{NUMBER})\s*(?P<u1>{WATT_UNIT})?\s*(?:-|to)\s*(?P<max>{NUMBER})\s*(?P<u2>{WATT_UNIT})\b", re.I)
+RANGE_MIN_MAX = re.compile(rf"\b(?:min|minimum|at least|floor)\s*(?:is|of)?\s*(?P<min>{NUMBER})\s*(?P<u1>{WATT_UNIT})?\b.*?\b(?:max|maximum|at most|ceiling)\s*(?:is|of)?\s*(?P<max>{NUMBER})\s*(?P<u2>{WATT_UNIT})\b", re.I)
+MAX_ONLY = re.compile(rf"\b(?:max|maximum|at most|ceiling|up to|not exceed|not exceeding)\s*(?:is|of)?\s*(?P<max>{NUMBER})\s*(?P<u2>{WATT_UNIT})\b", re.I)
+
 
 def decimal_value(value):
     try:

@@ -1,0 +1,68 @@
+{
+  "zip_path": "D:\\Ksit Hackathon\\CodeCraft_PARTSINTEL_FINAL.zip",
+  "size": 27882,
+  "sha256": "59593240a3423f033b314286cb451227a5fe5b37d89c3fe988660f7e6262b308",
+  "files": [
+    {
+      "name": "ARCHITECTURE.md",
+      "size": 5869
+    },
+    {
+      "name": "action_validator.py",
+      "size": 2226
+    },
+    {
+      "name": "budget_manager.py",
+      "size": 1646
+    },
+    {
+      "name": "catalogue_parser.py",
+      "size": 4601
+    },
+    {
+      "name": "decision_planner.py",
+      "size": 8142
+    },
+    {
+      "name": "document_intelligence.py",
+      "size": 17158
+    },
+    {
+      "name": "inventory_manager.py",
+      "size": 12864
+    },
+    {
+      "name": "partsintel_common.py",
+      "size": 3038
+    },
+    {
+      "name": "request_analyst.py",
+      "size": 14373
+    },
+    {
+      "name": "safety_validator.py",
+      "size": 3725
+    },
+    {
+      "name": "solution.py",
+      "size": 288
+    },
+    {
+      "name": "state_manager.py",
+      "size": 3752
+    },
+    {
+      "name": "stock_strategy.py",
+      "size": 2938
+    },
+    {
+      "name": "supervisor.py",
+      "size": 8779
+    }
+  ],
+  "check_stdout": "2 controller requests checked; configure and check your team gateway in the portal.",
+  "check_code": 0,
+  "runner_stdout": "{\n  \"summary\": {\n    \"mode\": \"mock\",\n    \"simulation_only\": true,\n    \"official_eligible\": false,\n    \"real_gateway_protocol_passed\": false,\n    \"notice\": \"Simulation-only mock; no real inference or official eligibility evidence.\",\n    \"cases\": 2,\n    \"scored_cases\": 2,\n    \"failures\": 0,\n    \"model_calls\": 2,\n    \"score\": 100.0,\n    \"components\": {\n      \"outcome\": {\n        \"earned\": 80.0,\n        \"max\": 80\n      },\n      \"integrity\": {\n        \"earned\": 15.0,\n        \"max\": 15\n      },\n      \"efficiency\": {\n        \"earned\": 5.0,\n        \"max\": 5\n      }\n    },\n    \"diagnostics\": {\n      \"fulfilled_fraction\": 0.75,\n      \"useful_escalation_fraction\": 0.25,\n      \"unnecessary_escalation_fraction\": 0.0,\n      \"unsafe_dispatches\": 0.0,\n      \"unavailable_dispatches\": 0.0,\n      \"mean_tool_spend\": 10.5,\n      \"invalid_actions\": 0.0\n    }\n  },\n  \"records\": [\n    {\n      \"case_index\": 0,\n      \"case_id\": \"eba1ce34afe81e3a\",\n      \"status\": \"scored\",\n      \"result\": {\n        \"score\": 100.0,\n        \"components\": {\n          \"outcome\": {\n            \"earned\": 80.0,\n            \"max\": 80\n          },\n          \"integrity\": {\n            \"earned\": 15.0,\n            \"max\": 15\n          },\n          \"efficiency\": {\n            \"earned\": 5.0,\n            \"max\": 5\n          }\n        },\n        \"diagnostics\": {\n          \"fulfilled_fraction\": 0.6666666666666666,\n          \"useful_escalation_fraction\": 0.3333333333333333,\n          \"unnecessary_escalation_fraction\": 0.0,\n          \"unsafe_dispatches\": 0,\n          \"unavailable_dispatches\": 0,\n          \"mean_tool_spend\": 12,\n          \"invalid_actions\": 0\n        }\n      },\n      \"model_calls\": 1,\n      \"world_steps\": 14\n    },\n    {\n      \"case_index\": 1,\n      \"case_id\": \"e369e4ea0873fd42\",\n      \"status\": \"scored\",\n      \"result\": {\n        \"score\": 100.0,\n        \"components\": {\n          \"outcome\": {\n            \"earned\": 80.0,\n            \"max\": 80\n          },\n          \"integrity\": {\n            \"earned\": 15.0,\n            \"max\": 15\n          },\n          \"efficiency\": {\n            \"earned\": 5.0,\n            \"max\": 5\n          }\n        },\n        \"diagnostics\": {\n          \"fulfilled_fraction\": 0.8333333333333334,\n          \"useful_escalation_fraction\": 0.16666666666666666,\n          \"unnecessary_escalation_fraction\": 0.0,\n          \"unsafe_dispatches\": 0,\n          \"unavailable_dispatches\": 0,\n          \"mean_tool_spend\": 9,\n          \"invalid_actions\": 0\n        }\n      },\n      \"model_calls\": 1,\n      \"world_steps\": 13\n    }\n  ]\n}",
+  "runner_code": 0,
+  "timestamp": "2026-11-05 16:46:40 IST"
+}

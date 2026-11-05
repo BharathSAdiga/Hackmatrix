@@ -3,7 +3,8 @@ import re
 from decimal import Decimal
 
 from partsintel_common import (VOLTAGE_RE, WATT_RE, extract_connectors,
-                               normalize_mentions, agreed, decimal_value, decimal_text)
+                               normalize_mentions, agreed, decimal_value, decimal_text,
+                               RANGE_BETWEEN, RANGE_HYPHEN, RANGE_MIN_MAX, MAX_ONLY)
 
 
 _CLAUSE_SPLIT = re.compile(r"(?<=[.;!?])\s+|\s*;\s*")
@@ -72,17 +73,59 @@ def _extract(text, kind):
     connector = {"value": connector_value, "known": connector_known,
                  "source_evidence": [{"source_text": m["source_text"], "start": m["start"],
                                       "end": m["end"]} for m in connector_mentions]}
-    wattage = _field(watt_mentions, "minimum_wattage", "W")
+
+    range_match = RANGE_BETWEEN.search(active) or RANGE_HYPHEN.search(active) or RANGE_MIN_MAX.search(active)
+    max_match = MAX_ONLY.search(active) if not range_match else None
+    is_wattage_range = False
+
+    if kind == "request" and range_match:
+        u1 = range_match.group("u1") or range_match.group("u2")
+        u2 = range_match.group("u2")
+        v1 = Decimal(range_match.group("min")) / (Decimal(1000) if u1 and "m" in u1.lower() else Decimal(1))
+        v2 = Decimal(range_match.group("max")) / (Decimal(1000) if u2 and "m" in u2.lower() else Decimal(1))
+        min_w = decimal_text(min(v1, v2))
+        max_w = decimal_text(max(v1, v2))
+        wattage = {
+            "value": min_w,
+            "min_value": min_w,
+            "max_value": max_w,
+            "unit": "W",
+            "known": True,
+            "is_range": True,
+            "source_evidence": [{"source_text": range_match.group(0), "start": range_match.start(), "end": range_match.end()}]
+        }
+        is_wattage_range = True
+    elif kind == "request" and max_match:
+        u2 = max_match.group("u2")
+        v2 = Decimal(max_match.group("max")) / (Decimal(1000) if u2 and "m" in u2.lower() else Decimal(1))
+        max_w = decimal_text(v2)
+        wattage = {
+            "value": "0",
+            "min_value": "0",
+            "max_value": max_w,
+            "unit": "W",
+            "known": True,
+            "is_range": True,
+            "source_evidence": [{"source_text": max_match.group(0), "start": max_match.start(), "end": max_match.end()}]
+        }
+        is_wattage_range = True
+    else:
+        wattage = _field(watt_mentions, "minimum_wattage" if kind == "request" else "wattage", "W")
+        if wattage.get("known"):
+            wattage["min_value"] = wattage.get("value")
+            wattage["max_value"] = None
+
     ambiguity = []
+    watt_check = [] if is_wattage_range else watt_mentions
     for field_name, mentions in (("voltage", voltage_mentions), ("connector", connector_mentions),
-                                 ("minimum_wattage", watt_mentions)):
+                                 ("minimum_wattage", watt_check)):
         if len({m["normalized_value"] for m in mentions}) > 1:
             ambiguity.append("conflicting_" + field_name)
     if not voltage_mentions:
         ambiguity.append("missing_voltage")
     if not connector_mentions:
         ambiguity.append("missing_connector")
-    if kind == "request" and not watt_mentions:
+    if kind == "request" and not watt_mentions and not is_wattage_range:
         wattage = {"value": None, "unit": "W", "known": False, "source_evidence": []}
         ambiguity.append("missing_minimum_wattage")
     if kind == "catalogue" and not watt_mentions:
@@ -112,17 +155,44 @@ def parse_request(ticket, evidence=None, clarification=None):
         data = clarification.get("data")
         if isinstance(data, dict) and data.get("ticket_id") == ticket_id and isinstance(data.get("reply"), str):
             reply = data["reply"]
-            replies = normalize_mentions(reply, WATT_RE, "power")
-            values = {item["normalized_value"] for item in replies}
-            if len(values) == 1:
-                wattage = {"value": next(iter(values)), "unit": "W", "known": True,
-                           "source_evidence": [{"source_text": item["source_text"],
-                                                "reply": reply, "tool": "clarify"}
-                                               for item in replies]}
+            r_match = RANGE_BETWEEN.search(reply) or RANGE_HYPHEN.search(reply) or RANGE_MIN_MAX.search(reply)
+            m_match = MAX_ONLY.search(reply) if not r_match else None
+            if r_match:
+                u1 = r_match.group("u1") or r_match.group("u2")
+                u2 = r_match.group("u2")
+                v1 = Decimal(r_match.group("min")) / (Decimal(1000) if u1 and "m" in u1.lower() else Decimal(1))
+                v2 = Decimal(r_match.group("max")) / (Decimal(1000) if u2 and "m" in u2.lower() else Decimal(1))
+                min_w = decimal_text(min(v1, v2))
+                max_w = decimal_text(max(v1, v2))
+                wattage = {
+                    "value": min_w, "min_value": min_w, "max_value": max_w, "unit": "W", "known": True, "is_range": True,
+                    "source_evidence": [{"source_text": r_match.group(0), "reply": reply, "tool": "clarify"}]
+                }
                 ambiguity = [item for item in ambiguity if item != "missing_minimum_wattage"]
                 clarification_used = True
-            elif replies:
-                ambiguity.append("conflicting_clarification_reply")
+            elif m_match:
+                u2 = m_match.group("u2")
+                v2 = Decimal(m_match.group("max")) / (Decimal(1000) if u2 and "m" in u2.lower() else Decimal(1))
+                max_w = decimal_text(v2)
+                wattage = {
+                    "value": "0", "min_value": "0", "max_value": max_w, "unit": "W", "known": True, "is_range": True,
+                    "source_evidence": [{"source_text": m_match.group(0), "reply": reply, "tool": "clarify"}]
+                }
+                ambiguity = [item for item in ambiguity if item != "missing_minimum_wattage"]
+                clarification_used = True
+            else:
+                replies = normalize_mentions(reply, WATT_RE, "power")
+                values = {item["normalized_value"] for item in replies}
+                if len(values) == 1:
+                    w_val = next(iter(values))
+                    wattage = {"value": w_val, "min_value": w_val, "max_value": None, "unit": "W", "known": True,
+                               "source_evidence": [{"source_text": item["source_text"],
+                                                    "reply": reply, "tool": "clarify"}
+                                                   for item in replies]}
+                    ambiguity = [item for item in ambiguity if item != "missing_minimum_wattage"]
+                    clarification_used = True
+                elif replies:
+                    ambiguity.append("conflicting_clarification_reply")
 
     explicit_constraints = []
     for match in _CONSTRAINT_CUES.finditer(source_text):
@@ -198,12 +268,16 @@ def compatibility(request, part):
     elif not part_w.get("known"):
         unknown.append("part_wattage_unknown")
     else:
-        req_power = decimal_value(req_w.get("value"))
+        req_min = decimal_value(req_w.get("min_value", req_w.get("value")))
+        req_max = decimal_value(req_w.get("max_value"))
         part_power = decimal_value(part_w.get("value"))
-        if req_power is None or part_power is None:
+        if part_power is None:
             unknown.append("invalid_wattage_value")
-        elif part_power < req_power:
-            reasons.append("insufficient_wattage")
+        else:
+            if req_min is not None and part_power < req_min:
+                reasons.append("insufficient_wattage")
+            if req_max is not None and part_power > req_max:
+                reasons.append("excess_wattage")
     status = "incompatible" if reasons else ("unresolved" if unknown else "compatible")
     return {"part_id": part.get("part_id"), "status": status,
             "technical_mismatch_reasons": reasons, "unresolved_uncertainty": unknown,

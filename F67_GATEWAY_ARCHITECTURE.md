@@ -100,3 +100,4 @@ The PARTSINTEL solution employs a strictly decoupled, security-hardened three-ti
 2. **Reverse Proxy Tunneling:** Public traffic on Port 443 is forwarded via Cloudflare Tunnel directly to `127.0.0.1:8080`.
 3. **No Ingress Ports Required:** The host firewall does not open Port 80, 8080, or 443 to raw inbound traffic; all ingress is brokered via Cloudflare's authenticated outbound tunnel connections.
 4. **Deadline Compliance:** All internal upstream timeouts are set to 35 seconds, ensuring the gateway always returns cleanly before the platform's 45-second deadline.
+

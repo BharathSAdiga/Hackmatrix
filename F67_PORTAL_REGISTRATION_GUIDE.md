@@ -41,3 +41,4 @@ Per official `EVENT_RULES.md` and `GATEWAY.md`:
 > - Your receipt has already achieved **`Compatibility passed`**.
 > - Clicking "Withdraw" will **permanently burn 1 of your 4 allowed attempts** without refunding it, leaving your submission with zero score.
 > - Simply click the **"Refresh"** button at the top-right of the portal page every 1–2 minutes while the organizer's background grading pod processes the queue.
+

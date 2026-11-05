@@ -45,3 +45,4 @@
 3. **Strict Bearer Authentication:** Enforces constant-time string comparison on incoming Bearer tokens. Invalid or omitted tokens return `HTTP 403 Forbidden` instantly before invoking upstream inference.
 4. **No-Redirect Handler (`NoRedirectHandler`):** Enforces strict refusal of HTTP redirects (301/302) on outbound provider connections to prevent Server-Side Request Forgery (SSRF) and credential leaking.
 5. **Read-Only Compatibility:** Controller code executes cleanly without creating temporary files or writing to disk, ensuring full compatibility with read-only evaluator filesystems.
+

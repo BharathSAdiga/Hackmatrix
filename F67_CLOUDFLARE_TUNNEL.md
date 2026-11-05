@@ -76,3 +76,4 @@ If you own or wish to acquire a permanent domain:
 > [!IMPORTANT]
 > To protect the official submission that is currently pending evaluation, **we are keeping the existing Quick Tunnel operational and undisturbed**.
 > Do not kill task `task-471` until full grading has finished or until a permanent domain is explicitly approved and deployed.
+

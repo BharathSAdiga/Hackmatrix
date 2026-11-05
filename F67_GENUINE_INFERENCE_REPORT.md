@@ -59,3 +59,4 @@ During `local_runner.py` smoke test over the live gateway:
 - **Case 1 (`eba1ce34afe81e3a`):** `input_tokens: 1125, output_tokens: 10, total_tokens: 1135`
 - **Case 2 (`e369e4ea0873fd42`):** `input_tokens: 1092, output_tokens: 10, total_tokens: 1102`
 - **Evidence:** Real token usage returned, verified, and recorded by the organizer's simulator.
+

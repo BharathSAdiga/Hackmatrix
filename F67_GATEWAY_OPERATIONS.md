@@ -56,3 +56,4 @@ To make the gateway run automatically on Windows startup without requiring any o
    - Start in: `D:\Ksit Hackathon`
 6. Under **Conditions**: Uncheck *"Stop if the computer switches to battery power"*.
 7. Click **OK** to save.
+

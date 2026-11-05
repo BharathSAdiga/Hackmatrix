@@ -10,19 +10,25 @@ Complies strictly with KSIT Hackmatrix Agentic AI Gateway specifications:
 - Multi-threaded execution for production reverse proxy deployment
 """
 
+import hashlib
 import hmac
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import os
 from pathlib import Path
 import sys
+import threading
 import time
+from urllib.error import HTTPError
 from urllib.request import HTTPRedirectHandler, HTTPSHandler, ProxyHandler, Request, build_opener
 
 MAX_REQUEST_BYTES = 65_536      # 64 KiB
 MAX_RESPONSE_BYTES = 131_072    # 128 KiB
 MAX_MODEL_TEXT_BYTES = 65_536   # 64 KiB
 PROVIDER_TIMEOUT_SECS = 35
+
+_CACHE_LOCK = threading.Lock()
+_RESPONSE_CACHE = {}  # sha256(payload) -> (text, usage)
 
 
 def load_env_file(filepath: Path):
@@ -62,6 +68,11 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Connection", "close")
         self.end_headers()
         self.wfile.write(body)
+        print(f"[{time.strftime('%H:%M:%S')}] {self.command} {self.path} -> {status_code} ({len(body)} bytes)")
+
+    def send_error(self, code, message=None, explain=None):
+        super().send_error(code, message, explain)
+        print(f"[{time.strftime('%H:%M:%S')}] {self.command} {self.path} -> ERROR {code}: {message}")
 
     def do_GET(self):
         """Health check endpoint for reverse proxy and DevOps verification."""
@@ -160,13 +171,52 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
             method="POST",
         )
 
+        cache_key = hashlib.sha256(outbound_data).hexdigest()
+        with _CACHE_LOCK:
+            if cache_key in _RESPONSE_CACHE:
+                cached_text, cached_usage = _RESPONSE_CACHE[cache_key]
+                self.send_json(200, {
+                    "text": cached_text,
+                    "usage": cached_usage,
+                })
+                return
+
         opener = build_opener(ProxyHandler({}), HTTPSHandler(), NoRedirectHandler())
 
-        try:
-            with opener.open(outbound_req, timeout=PROVIDER_TIMEOUT_SECS) as resp:
-                resp_bytes = resp.read(MAX_RESPONSE_BYTES + 1)
-        except Exception as e:
-            self.send_error(502, f"Upstream provider failure: {str(e)[:100]}")
+        resp_bytes = None
+        max_attempts = 6
+        for attempt in range(1, max_attempts + 1):
+            elapsed = time.time() - start_time
+            remaining_time = max(1.0, PROVIDER_TIMEOUT_SECS - elapsed)
+            if remaining_time <= 1.5:
+                break
+            try:
+                with opener.open(outbound_req, timeout=min(15.0, remaining_time)) as resp:
+                    resp_bytes = resp.read(MAX_RESPONSE_BYTES + 1)
+                    break
+            except HTTPError as e:
+                # 429 Rate Limit or temporary upstream failure (502, 503, 504)
+                if e.code in (429, 502, 503, 504) and attempt < max_attempts:
+                    retry_after = e.headers.get("Retry-After")
+                    try:
+                        sleep_time = float(retry_after) if retry_after else (1.5 * attempt)
+                    except ValueError:
+                        sleep_time = 1.5 * attempt
+                    sleep_time = min(sleep_time, remaining_time - 1.5)
+                    if sleep_time > 0:
+                        time.sleep(sleep_time)
+                        continue
+                self.send_error(502, f"Upstream provider failure: {str(e)[:100]}")
+                return
+            except Exception as e:
+                if attempt < max_attempts and remaining_time > 3.0:
+                    time.sleep(1.0)
+                    continue
+                self.send_error(502, f"Upstream provider failure: {str(e)[:100]}")
+                return
+
+        if resp_bytes is None:
+            self.send_error(504, "Gateway Timeout: Upstream provider deadline exceeded")
             return
 
         if len(resp_bytes) > MAX_RESPONSE_BYTES:
@@ -204,6 +254,11 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
                 val = raw_usage.get(in_key)
                 if type(val) is int and 0 <= val <= 1_000_000_000:
                     usage[out_key] = val
+
+        with _CACHE_LOCK:
+            if len(_RESPONSE_CACHE) > 500:
+                _RESPONSE_CACHE.clear()
+            _RESPONSE_CACHE[cache_key] = (text, usage)
 
         self.send_json(200, {
             "text": text,

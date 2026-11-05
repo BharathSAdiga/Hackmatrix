@@ -57,3 +57,4 @@ All measurements were taken over the public internet from external probes:
 - **`text` field:** Strict string type, non-empty, contains accurate deduction.
 - **`usage` field:** Strict dictionary containing `input_tokens`, `output_tokens`, `total_tokens` integers.
 - **Payload size:** Under 200 bytes (far below the 131,072-byte platform response cap).
+

@@ -58,9 +58,9 @@ if not tunnel_url:
     sys.exit(1)
 
 gateway_endpoint = f"{tunnel_url}/gateway"
-token = os.environ.get("BEARER_TOKEN", "<set in .env>")
+token = os.environ.get("TEAM_GATEWAY_TOKEN", os.environ.get("BEARER_TOKEN", "<set in .env>"))
 print("\n" + "=" * 60)
-print(f"[+] TUNNEL ESTABLISHED!")
+print(f"[+] HARDENED TUNNEL & GATEWAY ESTABLISHED!")
 print(f"[+] Public Gateway Endpoint: {gateway_endpoint}")
 print(f"[+] Bearer Token:           {token}")
 print("=" * 60 + "\n")
@@ -69,9 +69,17 @@ out_file = gw_dir / "TUNNEL_URL.txt"
 with open(out_file, "w", encoding="utf-8") as f:
     f.write(f"GATEWAY_URL={gateway_endpoint}\n")
 
-# Keep process alive to maintain tunnel and server
+# Stream output and maintain server alive
 try:
-    proc.wait()
+    while True:
+        line = proc.stdout.readline()
+        if not line:
+            if proc.poll() is not None:
+                break
+            time.sleep(0.1)
+            continue
+        sys.stdout.write(line)
+        sys.stdout.flush()
 except KeyboardInterrupt:
     print("[*] Terminating tunnel and server.")
     proc.terminate()

@@ -155,12 +155,20 @@ def run_supervisor(observation, incoming_state):
     if (not state.get("model_request_issued") and
             state.get("model_calls", 0) < 8 and "llm_response" not in observation):
         messages = [{"role": "user", "content": _model_prompt(observation, doc_evidence)}]
-        serialized = json.dumps(messages, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
-        if len(serialized) > MODEL_MESSAGE_CAP:
+        serialized = json.dumps(messages, ensure_ascii=False, allow_nan=False).encode("utf-8")
+        cumulative_bytes = state.get("cumulative_wire_bytes", 0)
+        if len(serialized) > MODEL_MESSAGE_CAP or (cumulative_bytes + len(serialized)) > 48000:
             messages = [{"role": "user", "content": "Return JSON with exactly one empty warnings array."}]
+            serialized = json.dumps(messages, ensure_ascii=False, allow_nan=False).encode("utf-8")
+            if (cumulative_bytes + len(serialized)) > 48000:
+                action = _fallback_action(observation, state, analysis, inventory,
+                                          state.get("llm_warnings", {"tickets": [], "parts": []}))
+                state = state_manager.mark_action(state, action)
+                return state_manager.serializable_response(action, state)
         action = {"op": "llm", "messages": messages, "max_output_tokens": MODEL_OUTPUT_TOKENS}
         state["model_request_issued"] = True
-        state["model_calls"] = 1
+        state["model_calls"] = state.get("model_calls", 0) + 1
+        state["cumulative_wire_bytes"] = cumulative_bytes + len(serialized)
         state = state_manager.mark_action(state, action)
         return state_manager.serializable_response(action, state)
 
