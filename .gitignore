@@ -12,3 +12,8 @@ ENV/
 *.swp
 *.swo
 PARTSINTEL_BACKUPS/
+gateway_service/.env*
+gateway_service/secrets*
+gateway_service/TUNNEL_URL.txt
+gateway_service/cloudflared.exe
+*.exe

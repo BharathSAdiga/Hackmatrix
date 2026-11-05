@@ -1,0 +1,8 @@
+.env
+.env.*
+__pycache__/
+*.py[cod]
+test_*.py
+verify_gateway_runner.py
+DEPLOYMENT_GUIDE.md
+config.example.env

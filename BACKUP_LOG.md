@@ -23,7 +23,8 @@
 | `BACKUP_20261105_124113_STAGE2_BASELINE_VERIFIED` | 2026-11-05 12:41:13 | Stage 2 Checkpoint | 30 | SHA-256 Verified | Yes | Clean baseline snapshot. 22 unit tests passing, smoke episode passing, official datasets intact. |
 | `BACKUP_20261105_124210_STAGE5_DOC_INTELLIGENCE_VERIFIED` | 2026-11-05 12:42:10 | Stage 5 Document Intel | 30 | SHA-256 Verified | Yes | Document intelligence engine (`document_intelligence.py`) + 17 new unit tests (39 total unit tests passing). |
 | `BACKUP_20261105_124319_STAGE5_DOC_INTELLIGENCE_REPORTED` | 2026-11-05 12:43:19 | Stage 5 Documentation | 34 | SHA-256 Verified | Yes | Includes `DOCUMENT_INTELLIGENCE_REPORT.md`, `PROGRESS_LOG.md`, `PROJECT_HEALTH_REPORT.md`, and `BACKUP_LOG.md`. |
-| `BACKUP_20261105_125953_STAGE7_INVENTORY_STOCK_STRATEGY_VERIFIED` | 2026-11-05 12:59:53 | Stages 6 & 7 Verification | 43 | SHA-256 Verified | Yes | Includes Request Analyst (`request_analyst.py`, `catalogue_parser.py`, `partsintel_common.py`), Inventory Manager (`inventory_manager.py`, `stock_strategy.py`), reports, and 75 unit tests passing. |
+| `BACKUP_20261105_125953_STAGE7_INVENTORY_STOCK_STRATEGY_VERIFIED` | 2026-11-05 12:59:53 | Stages 6 & 7 Verification | 43 | SHA-256 Verified | Yes | Includes Request Analyst, Inventory Manager, stock strategy, and 75 unit tests passing. |
+| `BACKUP_20261105_131724_STAGE8_FOUR_AGENT_ARCH_SMOKE_100` | 2026-11-05 13:17:24 | Stages 3, 4, 8 Architecture | 52 | SHA-256 Verified | Yes | Four-Agent architecture (`supervisor`, `action_validator`, `budget_manager`, `decision_planner`, `safety_validator`, `state_manager`), 80 unit tests passing, **100/100 score on official smoke test**. |
 
 ---
 
